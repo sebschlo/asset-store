@@ -11,7 +11,7 @@ class AssetSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         """
-        Ensure valid asset classes and asset details are used
+        Ensure valid asset classes and asset details are used to satisfy spec
         """
         # Ensure valid asset class
         a_type = attrs.get('asset_type', '')
@@ -36,10 +36,14 @@ class AssetSerializer(serializers.ModelSerializer):
         return attrs
 
     def create(self, validated_data):
+        """
+        Override the create function to assign the correct asset to the 
+        related AssetDetail objects.
+        """
         details_data = validated_data.pop('assetdetail_set')
         asset = Asset.objects.create(**validated_data)
 
-        # Create related objects
+        # Create related asset details
         for det in details_data:
             AssetDetail.objects.create(asset=asset, **det)
 
