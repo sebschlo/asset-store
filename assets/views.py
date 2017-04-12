@@ -23,6 +23,12 @@ def asset_list(request):
         return Response(serializer.data)
 
     elif request.method == 'POST':
+        # Check that admin user is creating objects
+        user = request.META.get('HTTP_X_USER', 'anon')
+        if user != 'admin':
+            print([user for user in sorted(request.META.keys())])
+            return Response('Only admin user can create assets', status=status.HTTP_401_UNAUTHORIZED)
+
         data = JSONParser().parse(request)
         serializer = AssetSerializer(data=data)
         if serializer.is_valid():
@@ -32,6 +38,38 @@ def asset_list(request):
 
     else:
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+@api_view(['GET'])
+def asset_classfilter(request, class_name):
+    """
+    List assets filtered by the provided class string
+    :param request: Django HTTP request
+    :param class_name: The name of the class to perform filtering
+    :return: Response with appropriate assets
+    """
+    if request.method == 'GET':
+        assets = Asset.objects.filter(asset_class=class_name)
+        if not assets:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        else:
+            serializer = AssetSerializer(assets, many=True)
+            return Response(serializer.data)
+
+@api_view(['GET'])
+def asset_typefilter(request, type_name):
+    """
+    List assets filtered by the provided type string
+    :param request: Django HTTP 
+    :param type_name: The name of the type to perform filtering
+    :return: Response with appropriate assets
+    """
+    if request.method == 'GET':
+        assets = Asset.objects.filter(asset_type=type_name)
+        if not assets:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        else:
+            serializer = AssetSerializer(assets, many=True)
+            return Response(serializer.data)
 
 @api_view(['GET'])
 def asset_detail(request, pk):

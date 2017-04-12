@@ -61,8 +61,8 @@ class AssetDetail(models.Model):
 
     # Override attribute setter to store val's type
     def __setattr__(self, key, val):
-        if key == 'val' and val:
-            if type(val) is str:
+        if key == 'val' and val and not self.val_type:
+            if type(val) is str or type(val) is unicode:
                 self.val_type = 'S'
             elif type(val) is int:
                 self.val_type = 'I'
@@ -75,8 +75,18 @@ class AssetDetail(models.Model):
             super(AssetDetail, self).__setattr__(key, str(val))
         super(AssetDetail, self).__setattr__(key, val)
 
+    def clean(self):
+        if self.asset.asset_class == 'dish':
+            if not ((self.key == 'diameter' and self.val_type == 'F') or \
+                            (self.key == 'radome' and self.val_type == 'B')):
+                raise ValidationError('Unexpected asset detail for dish')
+
+        if self.asset.asset_class == 'yagi':
+            if not (self.key == 'gain' and self.val_type == 'F'):
+                raise ValidationError('Unexpected asset detail for yagi')
+
     def __str__(self):
-        return '{%s, %s}' % (self.key, self.val)
+        return '{%s: %s}' % (self.key, self.val)
 
     def __unicode__(self):
-        return u'{%s, %s}' % (self.key, self.val)
+        return u'{%s: %s}' % (self.key, self.val)
